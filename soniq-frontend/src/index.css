@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* SONIQ palette — pure black canvas, neon instrument colors */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --surface: 0 0% 4%;
+    --surface-2: 0 0% 7%;
+    --border-soniq: 0 0% 10%;
+
+    --card: 0 0% 4%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 7%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 53%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 348 100% 59%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 10%;
+    --input: 0 0% 10%;
+    --ring: 0 0% 100%;
+    --radius: 1rem;
+
+    /* Instrument neons (HSL for tailwind) */
+    --bass: 348 100% 59%;     /* #FF2D55 */
+    --drums: 184 100% 50%;    /* #00F5FF */
+    --guitar: 277 100% 69%;   /* #BF5FFF */
+    --keys: 165 100% 50%;     /* #00FFC8 */
+    --vocals: 51 100% 50%;    /* #FFD700 */
+    --other: 33 100% 50%;     /* #FF8C00 */
+
+    /* Raw hex for canvas/JS use */
+    --bass-hex: #FF2D55;
+    --drums-hex: #00F5FF;
+    --guitar-hex: #BF5FFF;
+    --keys-hex: #00FFC8;
+    --vocals-hex: #FFD700;
+    --other-hex: #FF8C00;
+
+    --text-primary: #FFFFFF;
+    --text-secondary: #888888;
+    --text-muted: #444444;
+
+    --glow-bass: 0 0 40px rgba(255, 45, 85, 0.5), 0 0 80px rgba(255, 45, 85, 0.25);
+    --glow-drums: 0 0 40px rgba(0, 245, 255, 0.5), 0 0 80px rgba(0, 245, 255, 0.25);
+    --glow-guitar: 0 0 40px rgba(191, 95, 255, 0.5), 0 0 80px rgba(191, 95, 255, 0.25);
+    --glow-keys: 0 0 40px rgba(0, 255, 200, 0.5), 0 0 80px rgba(0, 255, 200, 0.25);
+    --glow-vocals: 0 0 40px rgba(255, 215, 0, 0.5), 0 0 80px rgba(255, 215, 0, 0.25);
+
+    --sidebar-background: 0 0% 4%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 10%;
+    --sidebar-ring: 0 0% 100%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+
+  html, body, #root {
+    @apply bg-background text-foreground;
+    background: #000000;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+
+  .font-display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em; }
+  .font-mono-ui { font-family: 'Space Mono', ui-monospace, monospace; }
+  .font-body { font-family: 'Inter', system-ui, sans-serif; }
+
+  /* Focus rings — neon */
+  :focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection { background: #FF2D55; color: #000; }
+}
+
+@layer utilities {
+  .text-bass { color: var(--bass-hex); }
+  .text-drums { color: var(--drums-hex); }
+  .text-guitar { color: var(--guitar-hex); }
+  .text-keys { color: var(--keys-hex); }
+  .text-vocals { color: var(--vocals-hex); }
+  .text-other { color: var(--other-hex); }
+
+  .glow-bass { box-shadow: var(--glow-bass); }
+  .glow-drums { box-shadow: var(--glow-drums); }
+  .glow-guitar { box-shadow: var(--glow-guitar); }
+  .glow-keys { box-shadow: var(--glow-keys); }
+  .glow-vocals { box-shadow: var(--glow-vocals); }
+
+  .text-glow-white { text-shadow: 0 0 20px rgba(255,255,255,0.6), 0 0 40px rgba(255,255,255,0.3); }
+
+  .glass {
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .scrim-dark {
+    background: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(0,0,0,0));
+  }
+
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.4); }
+  }
+  .pulse-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
+
+  @keyframes blink-rec {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .blink-rec { animation: blink-rec 1s ease-in-out infinite; }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in { animation: fade-in 0.4s ease-out; }
+}
