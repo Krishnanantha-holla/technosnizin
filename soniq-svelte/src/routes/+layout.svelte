@@ -1,6 +1,6 @@
 <script lang="ts">
   import '../app.css';
-  import { Toaster } from 'sonner';
+  import { Toaster } from 'svelte-sonner';
 
   // Svelte 5: use $props() and {@render children()} instead of <slot/> [H-27]
   let { children } = $props();

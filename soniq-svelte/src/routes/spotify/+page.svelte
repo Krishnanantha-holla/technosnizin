@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { goto } from '$app/navigation';
-  import { toast } from 'sonner';
+  import { toast } from 'svelte-sonner';
   import {
     Home, Search, Library, ListMusic, ChevronRight, ChevronLeft,
     Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,

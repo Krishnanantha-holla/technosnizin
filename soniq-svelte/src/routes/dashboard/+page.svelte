@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { get } from 'svelte/store';
-  import { toast } from 'sonner';
+  import { toast } from 'svelte-sonner';
   import { Music2, Download, Settings } from 'lucide-svelte';
   import VisualizerCanvas from '$lib/components/VisualizerCanvas.svelte';
   import VisualizerSwitcher from '$lib/components/VisualizerSwitcher.svelte';

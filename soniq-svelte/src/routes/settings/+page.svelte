@@ -4,7 +4,7 @@
   import { audioStore } from '$store/audio';
   import { spotifyStore } from '$store/spotify';
   import { clearHistory } from '$lib/history';
-  import { toast } from 'sonner';
+  import { toast } from 'svelte-sonner';
   import { INSTRUMENTS, INSTRUMENT_COLORS } from '$types/index';
   import type { VisualizerPreset } from '$types/index';
   import { onMount } from 'svelte';
