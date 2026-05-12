@@ -15,7 +15,6 @@ from app.models.job import Job, JobStatus
 from app.models.user import User
 from app.schemas.job import AnalyzeResponse
 from app.services.storage import storage_service
-from app.tasks.analyze_task import analyze_task
 
 router = APIRouter(prefix="/api", tags=["analyze"])
 
@@ -117,5 +116,7 @@ async def analyze_audio(
     await db.commit()
     await db.refresh(job)
 
-    analyze_task.delay(job.id, file_path)
+    # Lazy import — keeps torch/demucs out of the API process import chain
+    from app.tasks.analyze_task import celery_app  # noqa: PLC0415
+    celery_app.send_task("analyze_audio", args=[job.id, file_path])
     return AnalyzeResponse(job_id=job.id)

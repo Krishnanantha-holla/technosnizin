@@ -7,8 +7,6 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-import torch
-
 logger = logging.getLogger(__name__)
 
 # Lazy singleton — initialised on first call so import doesn't block

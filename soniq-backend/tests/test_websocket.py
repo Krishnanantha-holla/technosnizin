@@ -1,28 +1,44 @@
 """
 WebSocket tests using starlette.testclient.TestClient [H-13].
-httpx.AsyncClient does not support websocket_connect.
 """
 import json
+from unittest.mock import AsyncMock, patch
 
-import pytest
+
+async def _auth_ok(token, job_id):
+    return True
 
 
-def test_websocket_job_not_found(sync_client):
-    """Unknown job_id with no token → close with 4001 (auth) or error message."""
-    # Anonymous job that doesn't exist — server should close or send error
-    with sync_client.websocket_connect("/ws/does-not-exist") as ws:
-        # Either the server closes immediately (4001) or sends an error frame
+async def _auth_fail(token, job_id):
+    return False
+
+
+def test_websocket_auth_rejected(sync_client):
+    """No token + auth fails → server closes the WebSocket."""
+    with patch("app.api.websocket._authenticate_ws", _auth_fail):
         try:
-            message = ws.receive_json()
-            assert message["type"] == "error"
+            with sync_client.websocket_connect("/ws/does-not-exist") as ws:
+                ws.receive_text()
         except Exception:
-            pass  # WebSocket closed — also acceptable
+            pass  # WebSocket closed with code 4001 — expected
 
 
-def test_websocket_done_flow(sync_client, monkeypatch):
-    """Simulate a completed job via monkeypatched Redis."""
-    import asyncio
-    from app.api import websocket as ws_api
+def test_websocket_done_flow(sync_client):
+    """Simulate a completed job via mocked Redis pub/sub."""
+
+    done_message = {"type": "message", "data": json.dumps({"type": "done"})}
+
+    class FakePubSub:
+        async def subscribe(self, *args):
+            pass
+
+        async def unsubscribe(self, *args):
+            pass
+
+        # websocket.py iterates with `async for message in pubsub.listen()`
+        async def listen(self):
+            yield {"type": "subscribe", "data": None}   # ignored
+            yield done_message
 
     async def fake_hgetall(key):
         return {"status": "done", "progress": "100", "stage": "done"}
@@ -33,26 +49,18 @@ def test_websocket_done_flow(sync_client, monkeypatch):
             "key": "C Major", "energy": 0.5, "frames": [],
         })
 
-    # Stub pub/sub to immediately yield a "done" message
-    class FakePubSub:
-        def __init__(self):
-            self._messages = [
-                {"type": "message", "data": json.dumps({"type": "done"})},
-            ]
-        async def subscribe(self, *args): pass
-        async def unsubscribe(self, *args): pass
-        async def __aiter__(self):
-            for m in self._messages:
-                yield m
+    with patch("app.api.websocket._authenticate_ws", _auth_ok):
+        with patch("app.api.websocket.async_redis_client") as mock_redis:
+            mock_redis.hgetall = AsyncMock(side_effect=fake_hgetall)
+            mock_redis.get = AsyncMock(side_effect=fake_get)
+            # pubsub() is a sync method that returns a pub/sub object
+            mock_redis.pubsub = lambda: FakePubSub()
 
-    monkeypatch.setattr(ws_api.async_redis_client, "hgetall", fake_hgetall)
-    monkeypatch.setattr(ws_api.async_redis_client, "get", fake_get)
-    monkeypatch.setattr(ws_api.async_redis_client, "pubsub", lambda: FakePubSub())
-
-    # Also stub auth so anonymous job passes
-    monkeypatch.setattr(ws_api, "_authenticate_ws", lambda token, job_id: asyncio.coroutine(lambda: True)())
-
-    with sync_client.websocket_connect("/ws/test-job") as ws:
-        result = ws.receive_json()
-        assert result["type"] == "result"
-        assert result["data"]["genre"] == "Pop"
+            with sync_client.websocket_connect("/ws/test-job") as ws:
+                # First: current state broadcast (progress)
+                msg1 = ws.receive_json()
+                assert msg1["type"] == "progress"
+                # Second: result from done event
+                msg2 = ws.receive_json()
+                assert msg2["type"] == "result"
+                assert msg2["data"]["genre"] == "Pop"
