@@ -13,9 +13,7 @@
 
   html, body {
     background: #000;
-    height: 100dvh;
-    max-height: 100dvh;
-    overflow: hidden;
+    min-height: 100dvh;
     overscroll-behavior: none;
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;

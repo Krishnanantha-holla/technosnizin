@@ -178,7 +178,7 @@
       "sidebar workspace"
       "player  player";
     width: 100%;
-    height: 100%;
+    height: 100dvh;
     background: #111;
     color: #fff;
     overflow: hidden;
