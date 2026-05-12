@@ -14,21 +14,28 @@ export const LiveInputButton = ({ onStart }: Props) => {
     } catch { toast.error('Microphone permission denied.'); }
   };
   const startSystem = async () => {
-    const ua = navigator.userAgent;
-    if (!/Chrome|Chromium|Edg/.test(ua)) {
-      toast.error('System audio capture requires Chrome. Try mic input instead.');
+    // getDisplayMedia with audio is supported in Chrome, Edge, and recent Firefox
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      toast.error('System audio capture is not supported in this browser. Try mic input instead.');
       return;
     }
     try {
-      // @ts-ignore - displayMedia audio
+      // @ts-expect-error - displayMedia audio not in standard types
       const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
       const audioTracks = s.getAudioTracks();
-      if (audioTracks.length === 0) { toast.error('No audio captured. Make sure to share a tab with audio.'); s.getTracks().forEach(t => t.stop()); return; }
-      // Stop video tracks, we only need audio
+      if (audioTracks.length === 0) {
+        toast.error('No audio captured. Make sure to share a tab with audio enabled.');
+        s.getTracks().forEach(t => t.stop());
+        return;
+      }
+      // Stop video tracks — we only need audio
       s.getVideoTracks().forEach(t => t.stop());
       const audioOnly = new MediaStream(audioTracks);
-      onStart(audioOnly, 'system'); setOpen(false);
-    } catch { toast.error('Could not capture system audio.'); }
+      onStart(audioOnly, 'system');
+      setOpen(false);
+    } catch {
+      toast.error('Could not capture system audio. Try mic input instead.');
+    }
   };
 
   return (

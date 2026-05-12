@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+@layer base {
+  :root {
+    --bass:   #FF2D55;
+    --drums:  #00F5FF;
+    --guitar: #BF5FFF;
+    --keys:   #00FFC8;
+    --vocals: #FFD700;
+    --other:  #FF8C00;
+  }
+
+  html, body {
+    background: #000;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  canvas { touch-action: none; user-select: none; }
+
+  /* Slim range inputs */
+  input[type='range'] { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; }
+  input[type='range']::-webkit-slider-runnable-track { height: 3px; background: rgba(255,255,255,0.15); border-radius: 9999px; }
+  input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2px solid rgba(255,255,255,0.3); margin-top: -4.5px; box-shadow: 0 0 6px rgba(255,255,255,0.3); transition: transform .1s; }
+  input[type='range']::-webkit-slider-thumb:hover { transform: scale(1.25); }
+  input[type='range']::-moz-range-track { height: 3px; background: rgba(255,255,255,0.15); border-radius: 9999px; }
+  input[type='range']::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2px solid rgba(255,255,255,0.3); }
+}
+
+@layer utilities {
+  .font-display  { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em; }
+  .font-mono-ui  { font-family: 'Space Mono', ui-monospace, monospace; }
+  .font-body     { font-family: 'Inter', system-ui, sans-serif; }
+
+  .glass {
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .scrim-dark { background: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(0,0,0,0)); }
+  .text-glow-white { text-shadow: 0 0 20px rgba(255,255,255,0.6), 0 0 40px rgba(255,255,255,0.3); }
+
+  .text-bass   { color: var(--bass); }
+  .text-drums  { color: var(--drums); }
+  .text-guitar { color: var(--guitar); }
+  .text-keys   { color: var(--keys); }
+  .text-vocals { color: var(--vocals); }
+
+  @keyframes blink-rec { 0%,100% { opacity:1 } 50% { opacity:0.3 } }
+  .blink-rec { animation: blink-rec 1s ease-in-out infinite; }
+
+  @keyframes pulse-dot { 0%,100% { opacity:0.4; transform:scale(1) } 50% { opacity:1; transform:scale(1.4) } }
+  .pulse-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
+
+  @keyframes fade-in { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
+  .animate-fade-in { animation: fade-in 0.4s ease-out; }
+
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+}

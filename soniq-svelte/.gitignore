@@ -1,0 +1,24 @@
+# Secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# SvelteKit generated
+.svelte-kit/
+build/
+
+# Dependencies
+node_modules/
+
+# Rust / WASM artifacts — rebuild with: wasm-pack build --target web --release
+src/lib/wasm-engine/target/
+src/lib/wasm-engine/.git/
+
+# Logs
+*.log
+
+# Editor
+.vscode/
+.idea/
+.DS_Store

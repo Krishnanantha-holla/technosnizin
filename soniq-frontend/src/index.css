@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -77,12 +79,68 @@
     background: #000000;
     min-height: 100vh;
     min-height: 100dvh;
+    /* Prevent pull-to-refresh and overscroll glow on mobile */
+    overscroll-behavior: none;
   }
 
   body {
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
-    overscroll-behavior: none;
+    /* Prevent text size adjustment on orientation change */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* ── Custom range slider — thin track, small thumb ── */
+  input[type='range'] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  input[type='range']::-webkit-slider-runnable-track {
+    height: 3px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 9999px;
+  }
+  input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid rgba(255,255,255,0.3);
+    margin-top: -4.5px;
+    box-shadow: 0 0 6px rgba(255,255,255,0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  input[type='range']::-webkit-slider-thumb:hover {
+    transform: scale(1.25);
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+  }
+  input[type='range']::-moz-range-track {
+    height: 3px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 9999px;
+  }
+  input[type='range']::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid rgba(255,255,255,0.3);
+    box-shadow: 0 0 6px rgba(255,255,255,0.3);
+  }
+  /* Vertical sliders (EQ) */
+  input[type='range'][style*='vertical-lr']::-webkit-slider-runnable-track {
+    width: 3px;
+    height: 100%;
+  }
+  /* Prevent canvas from being selected/highlighted on touch */
+  canvas {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .font-display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em; }

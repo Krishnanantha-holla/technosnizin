@@ -50,8 +50,10 @@ export class CosmosScene {
   }
 
   resize(w: number, h: number) {
-    this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h, false);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   }
 
   render(e: InstrumentEnergy, smoothed: InstrumentEnergy, dt: number) {

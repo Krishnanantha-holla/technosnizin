@@ -17,27 +17,32 @@ interface VisualizerState {
   setChromeVisible: (v: boolean) => void;
 }
 
+const safeLocalGet = (key: string, fallback: string) => {
+  try { return (localStorage.getItem(key) as string) || fallback; } catch { return fallback; }
+};
+
 const allLayersOn = INSTRUMENTS.reduce((acc, k) => ({ ...acc, [k]: true }), {} as Record<Instrument, boolean>);
 
 export const useVisualizerStore = create<VisualizerState>((set, get) => ({
-  preset: (typeof localStorage !== 'undefined' && (localStorage.getItem('soniq:preset') as VisualizerPreset)) || 'stage',
+  preset: safeLocalGet('soniq:preset', 'stage') as VisualizerPreset,
   energy: { ...ZERO_ENERGY },
   smoothedEnergy: { ...ZERO_ENERGY },
   layers: allLayersOn,
-  quality: (typeof localStorage !== 'undefined' && (localStorage.getItem('soniq:quality') as any)) || 'balanced',
+  quality: safeLocalGet('soniq:quality', 'balanced') as 'performance' | 'balanced' | 'quality',
   bpm: null,
   chromeVisible: true,
   setPreset: (p) => { localStorage.setItem('soniq:preset', p); set({ preset: p }); },
   setEnergy: (e) => {
     const cur = get().smoothedEnergy;
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    // Fast rates — visualizer should react immediately to beats
     const smoothed: InstrumentEnergy = {
-      bass: lerp(cur.bass, e.bass, 0.4),
-      drums: lerp(cur.drums, e.drums, 0.5),
-      guitar: lerp(cur.guitar, e.guitar, 0.3),
-      keys: lerp(cur.keys, e.keys, 0.2),
-      vocals: lerp(cur.vocals, e.vocals, 0.15),
-      other: lerp(cur.other, e.other, 0.3),
+      bass:   lerp(cur.bass,   e.bass,   0.7),
+      drums:  lerp(cur.drums,  e.drums,  0.8),
+      guitar: lerp(cur.guitar, e.guitar, 0.5),
+      keys:   lerp(cur.keys,   e.keys,   0.4),
+      vocals: lerp(cur.vocals, e.vocals, 0.35),
+      other:  lerp(cur.other,  e.other,  0.4),
     };
     set({ energy: e, smoothedEnergy: smoothed });
   },

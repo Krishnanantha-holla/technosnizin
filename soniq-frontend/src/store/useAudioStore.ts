@@ -19,17 +19,23 @@ interface AudioState {
   roomSize: number;
   eq: EQValues;
   eqPresets: Record<string, EQValues>;
+  // Crossfader
+  crossfade: number;       // 0 = full A, 1 = full B
+  trackBUrl: string | null;
+  trackBName: string | null;
   setSurround: (b: boolean) => void;
   setAtmos: (b: boolean) => void;
   setRoomSize: (n: number) => void;
   setEq: (eq: Partial<EQValues>) => void;
   applyPreset: (name: string) => void;
+  setCrossfade: (v: number) => void;
+  setTrackB: (url: string | null, name: string | null) => void;
 }
 
 const load = <T,>(k: string, fallback: T): T => {
-  try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
+  try { const v = localStorage.getItem(k); return v ? JSON.parse(v) as T : fallback; } catch { return fallback; }
 };
-const save = (k: string, v: unknown) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const save = (k: string, v: unknown) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ } };
 
 export const useAudioStore = create<AudioState>((set, get) => ({
   surround: load('soniq:surround', false),
@@ -37,9 +43,14 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   roomSize: load('soniq:roomSize', 30),
   eq: load('soniq:eq', FLAT_EQ),
   eqPresets: PRESETS,
+  crossfade: 0,
+  trackBUrl: null,
+  trackBName: null,
   setSurround: (b) => { save('soniq:surround', b); set({ surround: b }); },
   setAtmos: (b) => { save('soniq:atmos', b); set({ atmos: b }); },
   setRoomSize: (n) => { save('soniq:roomSize', n); set({ roomSize: n }); },
   setEq: (eq) => { const next = { ...get().eq, ...eq }; save('soniq:eq', next); set({ eq: next }); },
   applyPreset: (name) => { const p = PRESETS[name]; if (p) { save('soniq:eq', p); set({ eq: p }); } },
+  setCrossfade: (v) => set({ crossfade: v }),
+  setTrackB: (url, name) => set({ trackBUrl: url, trackBName: name }),
 }));

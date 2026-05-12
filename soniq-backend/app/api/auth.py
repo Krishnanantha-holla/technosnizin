@@ -21,31 +21,63 @@ def create_jwt(user_id: str) -> str:
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-async def get_optional_user(
-    authorization: Optional[str] = Header(default=None),
-    db: AsyncSession = Depends(get_db),
+async def _get_user_from_token(
+    authorization: Optional[str],
+    db: AsyncSession,
+    require: bool = False,
 ) -> Optional[User]:
     if not authorization:
+        if require:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
         return None
 
     scheme, _, token = authorization.partition(" ")
     if scheme.lower() != "bearer" or not token:
+        if require:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid auth scheme")
         return None
 
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         user_id = payload.get("sub")
         if not user_id:
+            if require:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
             return None
     except JWTError:
+        if require:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
         return None
 
     result = await db.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none()
+    user = result.scalar_one_or_none()
+    if not user and require:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    return user
+
+
+async def get_optional_user(
+    authorization: Optional[str] = Header(default=None),
+    db: AsyncSession = Depends(get_db),
+) -> Optional[User]:
+    return await _get_user_from_token(authorization, db, require=False)
+
+
+async def get_current_user(
+    authorization: Optional[str] = Header(default=None),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """Dependency that requires a valid JWT. Raises 401 if missing/invalid."""
+    user = await _get_user_from_token(authorization, db, require=True)
+    assert user is not None  # require=True guarantees this
+    return user
 
 
 @router.post("/spotify/callback", response_model=TokenResponse)
-async def spotify_callback(payload: SpotifyCallbackRequest, db: AsyncSession = Depends(get_db)) -> TokenResponse:
+async def spotify_callback(
+    payload: SpotifyCallbackRequest,
+    db: AsyncSession = Depends(get_db),
+) -> TokenResponse:
     if not settings.SPOTIFY_CLIENT_ID or not settings.SPOTIFY_CLIENT_SECRET or not settings.SPOTIFY_REDIRECT_URI:
         raise HTTPException(status_code=500, detail="Spotify OAuth is not configured")
 
@@ -79,10 +111,14 @@ async def spotify_callback(payload: SpotifyCallbackRequest, db: AsyncSession = D
         if not access_token:
             raise HTTPException(status_code=400, detail="Spotify did not return an access token")
 
-        profile_response = await client.get(profile_url, headers={"Authorization": f"Bearer {access_token}"})
+        profile_response = await client.get(
+            profile_url, headers={"Authorization": f"Bearer {access_token}"}
+        )
         if profile_response.status_code >= 400:
-            raise HTTPException(status_code=400, detail=f"Spotify profile fetch failed: {profile_response.text}")
-
+            raise HTTPException(
+                status_code=400,
+                detail=f"Spotify profile fetch failed: {profile_response.text}",
+            )
         profile = profile_response.json()
 
     spotify_id = profile.get("id")

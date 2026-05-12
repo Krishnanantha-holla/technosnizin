@@ -1,8 +1,16 @@
 from functools import lru_cache
 from typing import List
 
-from pydantic import Field, field_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Placeholder values that must never reach production
+_INSECURE_KEY_FRAGMENTS = (
+    "your-secret-key",
+    "change-me-please",
+    "change-me-generate",
+    "your_spotify_client_secret_here",
+)
 
 
 class Settings(BaseSettings):
@@ -39,6 +47,27 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def validate_secret_key(cls, v: str) -> str:
+        if any(frag in v for frag in _INSECURE_KEY_FRAGMENTS):
+            import os
+            if os.getenv("APP_ENV", "development") != "development":
+                raise ValueError(
+                    "SECRET_KEY contains a placeholder value. "
+                    "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(48))\""
+                )
+        if len(v) < 32:
+            raise ValueError("SECRET_KEY must be at least 32 characters.")
+        return v
+
+    @field_validator("SPOTIFY_CLIENT_SECRET")
+    @classmethod
+    def validate_spotify_secret(cls, v: str) -> str:
+        if v and any(frag in v for frag in _INSECURE_KEY_FRAGMENTS):
+            raise ValueError("SPOTIFY_CLIENT_SECRET contains a placeholder value.")
+        return v
 
     @field_validator("STORAGE_BACKEND")
     @classmethod
