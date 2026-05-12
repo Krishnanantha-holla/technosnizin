@@ -1,5 +1,5 @@
 import { writable, get } from 'svelte/store';
-import { getStoredProfile, getStoredTokens, clearSpotifySession, fetchSpotifyProfile, getValidAccessToken } from '$lib/spotifyAuth';
+import { getStoredProfile, getStoredTokens, clearSpotifySession, fetchSpotifyProfile, getValidAccessToken, checkScopeVersion } from '$lib/spotifyAuth';
 import type { SpotifyProfile } from '$lib/spotifyAuth';
 
 function createSpotifyStore() {
@@ -9,6 +9,11 @@ function createSpotifyStore() {
   const isPremium = writable(false);
 
   async function hydrate() {
+    // Force re-auth if scopes changed since last login
+    if (!checkScopeVersion()) {
+      connected.set(false);
+      return;
+    }
     const { accessToken: at } = getStoredTokens();
     if (!at) return;
     const token = await getValidAccessToken();

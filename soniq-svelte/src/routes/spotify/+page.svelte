@@ -141,23 +141,41 @@
   }
   async function loadHome() {
     loading = true;
-    const [tt, ta, rp, pl, nr, fp] = await Promise.allSettled([
-      getTopTracks('medium_term', 10), getTopArtists('medium_term', 8),
-      getRecentlyPlayed(12), getUserPlaylists(20), getNewReleases(8), getFeaturedPlaylists(8),
-    ]);
-    if (tt.status === 'fulfilled') topTracks         = tt.value;
-    if (ta.status === 'fulfilled') topArtists        = ta.value;
-    if (rp.status === 'fulfilled') recentTracks      = rp.value.map(r => r.track);
-    if (pl.status === 'fulfilled') playlists         = pl.value;
-    if (nr.status === 'fulfilled') newReleases       = nr.value;
-    if (fp.status === 'fulfilled') featuredPlaylists = fp.value;
+    try {
+      const [tt, ta, rp, pl, nr, fp] = await Promise.allSettled([
+        getTopTracks('medium_term', 10), getTopArtists('medium_term', 8),
+        getRecentlyPlayed(12), getUserPlaylists(20), getNewReleases(8), getFeaturedPlaylists(8),
+      ]);
+      if (tt.status === 'fulfilled') topTracks         = tt.value;
+      if (ta.status === 'fulfilled') topArtists        = ta.value;
+      if (rp.status === 'fulfilled') recentTracks      = rp.value.map(r => r.track);
+      if (pl.status === 'fulfilled') playlists         = pl.value;
+      if (nr.status === 'fulfilled') newReleases       = nr.value;
+      if (fp.status === 'fulfilled') featuredPlaylists = fp.value;
+      // Log failures for debugging
+      const names = ['topTracks','topArtists','recent','playlists','newReleases','featured'];
+      [tt,ta,rp,pl,nr,fp].forEach((r, i) => {
+        if (r.status === 'rejected') console.warn(`[SONIQ] ${names[i]} failed:`, r.reason?.message ?? r.reason);
+      });
+    } catch (e) { console.error('[SONIQ] loadHome error:', e); }
     loading = false;
   }
   async function initSDK() {
     const token = $accessToken;
     if (!token || !$isPremium) return;
-    try { await spotifyPlayer.init(token); sdkReady = true; }
-    catch (e) { sdkError = e instanceof Error ? e.message : 'SDK failed'; }
+    try {
+      await spotifyPlayer.init(token);
+      sdkReady = true;
+      // Auto-transfer playback to this device
+      const deviceId = spotifyPlayer.getDeviceId();
+      if (deviceId && token) {
+        await fetch('https://api.spotify.com/v1/me/player', {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ device_ids: [deviceId], play: false }),
+        }).catch(() => {});
+      }
+    } catch (e) { sdkError = e instanceof Error ? e.message : 'SDK failed'; }
   }
   onMount(async () => {
     await spotifyStore.hydrate();
