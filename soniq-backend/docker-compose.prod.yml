@@ -1,49 +1,22 @@
 version: "3.9"
 
+# Production compose — use from the repo root:
+#   docker compose -f docker-compose.yml -f soniq-backend/docker-compose.prod.yml up -d
+#
+# Differences from dev:
+#   - No port bindings for Postgres/Redis (internal network only)
+#   - No --reload on uvicorn
+#   - Nginx on port 443 (add your TLS certs)
+
 services:
   api:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.api
-    env_file: .env
-    depends_on:
-      - redis
-      - postgres
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
 
   worker:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.worker
-    env_file: .env
-    depends_on:
-      - redis
-      - postgres
-    command: celery -A celery_worker worker --loglevel=info --concurrency=1
-
-  nginx:
-    image: nginx:1.27-alpine
-    depends_on:
-      - api
-    ports:
-      - "80:80"
-    volumes:
-      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+    command: celery -A celery_worker worker --loglevel=warning --concurrency=1
 
   postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: soniq
-      POSTGRES_PASSWORD: soniq
-      POSTGRES_DB: soniq
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+    ports: []   # not exposed to host in prod
 
   redis:
-    image: redis:7-alpine
-    volumes:
-      - redisdata:/data
-
-volumes:
-  pgdata:
-  redisdata:
+    ports: []   # not exposed to host in prod
